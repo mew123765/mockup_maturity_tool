@@ -35,39 +35,46 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Smart Data Loader
+# 2. Robust Data Loader with Encoding Support
 @st.cache_data
 def load_data():
     target_file = 'maturity_mock_data.csv'
     
-    # Check if the file exists
-    if os.path.exists(target_file):
-        return pd.read_csv(target_file)
+    # Check if the file exists first
+    if not os.path.exists(target_file):
+        all_files = os.listdir(".")
+        csv_files = [f for f in all_files if f.endswith('.csv')]
+        if csv_files:
+            target_file = csv_files[0]
+        else:
+            st.error("No CSV files found in GitHub.")
+            return pd.DataFrame()
+
+    # Try different encodings to solve UnicodeDecodeError
+    encodings = ['utf-8', 'latin1', 'iso-8859-1', 'utf-16']
+    for enc in encodings:
+        try:
+            return pd.read_csv(target_file, encoding=enc)
+        except UnicodeDecodeError:
+            continue
+        except Exception as e:
+            st.error(f"Error loading data: {e}")
+            return pd.DataFrame()
     
-    # If not found, look for any CSV in the directory to help the user
-    all_files = os.listdir(".")
-    csv_files = [f for f in all_files if f.endswith('.csv')]
-    
-    if csv_files:
-        # Fallback to the first CSV found
-        st.warning(f"'{target_file}' not found. Loading '{csv_files[0]}' instead.")
-        return pd.read_csv(csv_files[0])
-    else:
-        st.error("No CSV data files found in the GitHub repository.")
-        st.write("Files found in folder:", all_files)
-        return pd.DataFrame()
+    st.error("Could not decode the CSV file. Please save it as 'CSV UTF-8 (Comma delimited)' in Excel.")
+    return pd.DataFrame()
 
 df = load_data()
 
 if not df.empty:
+    # Clean up column names (remove hidden spaces)
+    df.columns = df.columns.str.strip()
+    
     st.title("🏭 Technology Maturity Dashboard")
     st.markdown("---")
 
     # 3. Theme Selector (Buttons)
     st.write("### 🏷️ Select Maturity Theme")
-    # Clean column names just in case
-    df.columns = df.columns.str.strip()
-    
     theme_list = sorted(df['Theme'].dropna().unique().tolist())
     selected_theme = st.radio("Theme Selector", theme_list, label_visibility="collapsed")
     
@@ -75,8 +82,7 @@ if not df.empty:
     theme_df = df[df['Theme'] == selected_theme]
 
     if not theme_df.empty:
-        # 4. Dynamic Y-Axis Mapping (Calculated per Theme)
-        # This ensures the Y-axis labels change when the theme changes
+        # 4. Dynamic Y-Axis Mapping (Specific to Selected Theme)
         level_map = theme_df[['Level', 'Level Name']].drop_duplicates().sort_values('Level')
         y_vals = level_map['Level'].tolist()
         y_text = level_map['Level Name'].tolist()
@@ -95,7 +101,7 @@ if not df.empty:
             symbol_sequence=['square'],
             height=450,
             category_orders={
-                "Level": sorted(y_vals, reverse=True), # Highest level on top
+                "Level": sorted(y_vals, reverse=True),
                 "Company": ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"]
             }
         )
@@ -111,7 +117,6 @@ if not df.empty:
         st.markdown("---")
         st.write("### 📶 Select Maturity Level to Explore Use Cases")
         
-        # Create user-friendly labels for the buttons
         button_labels = {row['Level']: f"L{row['Level']}: {row['Level Name']}" for _, row in level_map.iterrows()}
         
         selected_level_val = st.radio(
@@ -142,10 +147,11 @@ if not df.empty:
             col1, col2 = st.columns(2)
 
             with col1:
-                target_affiliate = st.selectbox("Select Affiliate:", ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"])
+                # Get only companies available in this filtered level
+                available_cos = sorted(level_df['Company'].unique().tolist())
+                target_affiliate = st.selectbox("Select Affiliate:", available_cos)
 
             with col2:
-                # Filter for active use cases for details
                 active_df = level_df[(level_df['Company'] == target_affiliate) & (level_df['Status'].isin(['Green', 'Yellow']))]
                 if not active_df.empty:
                     target_use_case = st.selectbox("Select Use Case:", active_df['Use Case'].unique())
@@ -164,4 +170,4 @@ if not df.empty:
                     st.markdown(f'<div class="info-box"><b>Function</b><br>{detail["Function in Solution"]}</div>', unsafe_allow_html=True)
                 
                 if detail['Capability to implement to others'] == 'Yes':
-                    st.success(f"🌟 **{target_affiliate}** is a Center of Excellence and can support others.")
+                    st.success(f"🌟 **{target_affiliate}** is a Center of Excellence for this solution.")
