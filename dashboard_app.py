@@ -23,7 +23,6 @@ st.markdown("""
     div.row-widget.stRadio input {
         display: none;
     }
-    /* Simple styling for the result boxes */
     .info-box {
         background-color: #f8f9fa;
         padding: 15px;
@@ -39,47 +38,53 @@ def load_data():
     try:
         return pd.read_csv('maturity_mock_data.csv')
     except:
-        st.error("Could not find 'maturity_mock_data.csv'. Please ensure it is in the same GitHub folder.")
+        st.error("Error: 'maturity_mock_data.csv' not found.")
         return pd.DataFrame()
 
 df = load_data()
 
 if not df.empty:
     st.title("🏭 Technology Maturity Dashboard")
+    st.markdown("---")
 
     # 2. Theme Selector (Buttons)
     st.write("### 🏷️ Select Maturity Theme")
-    # Dynamically get themes from the CSV to avoid naming errors
     theme_list = list(df['Theme'].unique())
     selected_theme = st.radio("Theme Selector", theme_list, label_visibility="collapsed")
-
-    # Filter data
     theme_df = df[df['Theme'] == selected_theme]
 
     if not theme_df.empty:
         # 3. Main Overview Chart
-        st.markdown("---")
         st.subheader(f"Maturity Overview: {selected_theme}")
+        
+        # DYNAMIC Y-AXIS LOGIC
+        # Get unique Level -> Level Name mapping from the data
+        level_map = df[['Level', 'Level Name']].drop_duplicates().sort_values('Level')
+        y_vals = level_map['Level'].tolist()
+        y_text = level_map['Level Name'].tolist()
 
         color_map = {"Green": "#28A745", "Yellow": "#FFD700", "Red": "#FF4D4D"}
-        
-        # Ensure we have data for the chart
         overview_pivot = theme_df.groupby(['Company', 'Level'])['Status'].first().reset_index()
 
         fig1 = px.scatter(
             overview_pivot, x="Company", y="Level", color="Status",
             color_discrete_map=color_map, symbol_sequence=['square'],
-            height=400,
-            category_orders={"Level": [5, 4, 3, 2], "Company": ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"]}
+            height=450,
+            category_orders={
+                "Level": sorted(y_vals, reverse=True), 
+                "Company": ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"]
+            }
         )
+        
+        # Applying the dynamic labels to the Y-Axis
         fig1.update_traces(marker=dict(size=35, line=dict(width=1, color='DarkSlateGrey')))
-        fig1.update_yaxes(tickvals=[2, 3, 4, 5], ticktext=['L2: Manual', 'L3: Digital', 'L4: Predictive', 'L5: Autonomous'])
+        fig1.update_yaxes(tickvals=y_vals, ticktext=y_text)
         st.plotly_chart(fig1, use_container_width=True)
 
         # 4. Level Selector (Buttons)
         st.markdown("---")
         st.write("### 📶 Select Maturity Level")
-        selected_level = st.radio("Level Selector", [2, 3, 4, 5], horizontal=True, label_visibility="collapsed")
+        selected_level = st.radio("Level Selector", y_vals, horizontal=True, label_visibility="collapsed")
 
         level_df = theme_df[theme_df['Level'] == int(selected_level)]
 
@@ -100,20 +105,18 @@ if not df.empty:
             col1, col2 = st.columns(2)
 
             with col1:
-                target_affiliate = st.selectbox("Select Affiliate for Details:", ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"])
+                target_affiliate = st.selectbox("Select Affiliate:", ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"])
 
             with col2:
-                # Filter for active use cases
                 active_df = level_df[(level_df['Company'] == target_affiliate) & (level_df['Status'].isin(['Green', 'Yellow']))]
                 if not active_df.empty:
                     target_use_case = st.selectbox("Select Use Case:", active_df['Use Case'].unique())
                 else:
-                    st.warning("No active solutions for this affiliate at this level.")
+                    st.warning("No solutions currently implemented or under development.")
                     target_use_case = None
 
             if target_use_case:
                 detail = active_df[active_df['Use Case'] == target_use_case].iloc[0]
-                
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.markdown(f'<div class="info-box"><b>Solution Name</b><br>{detail["Solution Name"]}</div>', unsafe_allow_html=True)
@@ -124,9 +127,3 @@ if not df.empty:
                 
                 if detail['Capability to implement to others'] == 'Yes':
                     st.success(f"🌟 **{target_affiliate}** is a Center of Excellence for this solution.")
-        else:
-            st.info(f"No data available for Level {selected_level} in this theme.")
-    else:
-        st.warning(f"No data found for the theme: {selected_theme}")
-else:
-    st.error("The data file is empty. Please check your CSV file.")
