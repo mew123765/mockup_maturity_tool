@@ -6,19 +6,60 @@ import os
 # 1. Page Configuration
 st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 
-# --- CUSTOM CSS ---
+# --- CUSTOM CSS: COMPACT & BRANDED LOOK ---
 st.markdown('''
 <style>
-[data-testid="stRadio"] div[role="radiogroup"] { flex-direction: row !important; display: flex !important; gap: 8px !important; }
-[data-testid="stRadio"] div[role="radiogroup"] label { background-color: #f8f9fa !important; padding: 8px 16px !important; border-radius: 4px !important; border: 1px solid #dee2e6 !important; cursor: pointer !important; min-width: 140px !important; justify-content: center !important; }
-[data-testid="stRadio"] div[role="radiogroup"] label > div:first-child { display: none !important; }
-[data-testid="stRadio"] div[role="radiogroup"] [aria-checked="true"] { background-color: #ffffff !important; border: 2px solid #EB0A1E !important; }
-.detail-card { background-color: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6; margin-bottom: 8px; }
-.card-title { color: #6c757d; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; }
-.card-content { color: #111111 !important; font-size: 0.95rem; }
-.yokoten-box { padding: 10px; border-radius: 4px; text-align: center; font-weight: 700; color: white !important; text-transform: uppercase; }
-.yokoten-can { background-color: #28A745; }
-.yokoten-cant { background-color: #DC3545; }
+/* Horizontal Radio Buttons as 'Tabs' */
+[data-testid="stRadio"] div[role="radiogroup"] {
+    flex-direction: row !important;
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+}
+
+[data-testid="stRadio"] div[role="radiogroup"] label {
+    background-color: #f1f3f5 !important; /* Light grey background */
+    padding: 10px 20px !important;
+    border-radius: 6px !important;
+    border: 1px solid #ced4da !important;
+    cursor: pointer !important;
+    min-width: 150px !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+/* Force Text Color to be Visible (Black) */
+[data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {
+    color: #111111 !important; /* Deep black/grey text */
+    font-weight: 700 !important;
+    margin: 0 !important;
+}
+
+/* Hide the original small radio circle */
+[data-testid="stRadio"] div[role="radiogroup"] label > div:first-child { 
+    display: none !important; 
+}
+
+/* Active Tab Styling (Toyota Red Border) */
+[data-testid="stRadio"] div[role="radiogroup"] [aria-checked="true"] {
+    background-color: #ffffff !important;
+    border: 2px solid #EB0A1E !important; /* Toyota Red */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* Detail Cards visibility */
+.detail-card {
+    background-color: #ffffff; 
+    padding: 15px; 
+    border-radius: 8px;
+    border: 1px solid #dee2e6; 
+    margin-bottom: 10px;
+    color: #111111 !important;
+}
+.card-title { color: #6c757d; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; }
+.card-content { color: #000000 !important; font-size: 1rem; }
+
+.block-container { padding-top: 2rem !important; }
 </style>
 ''', unsafe_allow_html=True)
 
