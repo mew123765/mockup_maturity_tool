@@ -22,7 +22,7 @@ st.markdown('''
     flex: 4; /* 4/5 Width */
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 30px;
 }
 
 .status-side {
