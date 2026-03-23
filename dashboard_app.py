@@ -163,7 +163,7 @@ if not df.empty:
                               legend=dict(orientation="h", y=1.1, x=1, title=None))
             st.plotly_chart(fig2, use_container_width=True)
 
-            # 4. DRILL-DOWN
+            # --- 4. DRILL-DOWN (Fixed Rendering) ---
             st.markdown("**3. Technical Solution Details**")
             d_col1, d_col2 = st.columns(2)
             with d_col1:
@@ -180,28 +180,36 @@ if not df.empty:
                 y_cls = "yokoten-can" if is_yokoten else "yokoten-cant"
                 y_txt = "Can Yokoten" if is_yokoten else "Cannot Yokoten"
 
-                # Custom HTML Layout
-                st.markdown(f'''
-                <div class="detail-container">
-                    <div class="text-stack">
-                        <div class="detail-card" style="flex: 0;">
+                # Using st.columns to handle the 4/5 and 1/5 split reliably
+                left_info, right_status = st.columns([4, 1])
+
+                with left_info:
+                    # Solution Name (Smallest)
+                    st.markdown(f'''
+                        <div class="detail-card">
                             <div class="card-title">Solution Name</div>
                             <div class="card-content">{detail.get("Solution Name", "N/A")}</div>
-                        </div>
-                        <div class="detail-card" style="flex: 1;">
+                        </div>''', unsafe_allow_html=True)
+        
+                    # Solution Description (Medium)
+                    st.markdown(f'''
+                        <div class="detail-card">
                             <div class="card-title">Solution Description</div>
                             <div class="card-content">{detail.get("Solution Description", "N/A")}</div>
-                        </div>
-                        <div class="detail-card" style="flex: 2;">
+                        </div>''', unsafe_allow_html=True)
+        
+                    # Function (Biggest + Scrollable)
+                    st.markdown(f'''
+                        <div class="detail-card">
                             <div class="card-title">Function (Scrollable)</div>
                             <div class="card-content scroll-box">{detail.get("Function in Solution", "N/A")}</div>
-                        </div>
-                    </div>
-        
-                    <div class="status-side">
-                        <div class="yokoten-box {y_cls}">
-                            {y_txt}
-                        </div>
-                    </div>
-                </div>
-                ''', unsafe_allow_html=True)
+                        </div>''', unsafe_allow_html=True)
+
+                with right_status:
+                    # Status Box (Centered vertically via a div wrapper)
+                    st.markdown(f'''
+                        <div style="height: 100%; display: flex; align-items: center; padding-top: 10px;">
+                            <div class="yokoten-box {y_cls}">
+                                {y_txt}
+                            </div>
+                        </div>''', unsafe_allow_html=True)
