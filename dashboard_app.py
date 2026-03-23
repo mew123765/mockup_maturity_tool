@@ -6,54 +6,58 @@ import os
 # 1. Page Configuration
 st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 
-# --- IMPROVED ROBUST CSS ---
+# --- REFINED CSS FOR VISIBLE TEXT BUTTONS ---
 st.markdown("""
     <style>
-    /* 1. Force the radio group to be horizontal and wrap nicely */
+    /* 1. Force horizontal layout for radio buttons */
     [data-testid="stRadio"] div[role="radiogroup"] {
         flex-direction: row !important;
         display: flex !important;
-        gap: 12px !important;
+        gap: 10px !important;
         flex-wrap: wrap !important;
     }
 
-    /* 2. Hide the actual radio circle/dot */
-    [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] {
-        margin-left: 0px !important;
-    }
-    [data-testid="stRadio"] div[role="radiogroup"] label [data-testid="stWidgetLabel"] {
-        display: none !important;
-    }
-    /* Hide the radio input circle */
-    [data-testid="stRadio"] div[role="radiogroup"] label div:first-child {
-        display: none !important;
-    }
-
-    /* 3. Style the labels to look like Rectangular Buttons */
+    /* 2. Style the Label (The Button Rectangle) */
     [data-testid="stRadio"] div[role="radiogroup"] label {
         background-color: #f8f9fa !important;
-        padding: 10px 20px !important;
+        padding: 12px 24px !important;
         border-radius: 4px !important;
         border: 1px solid #dee2e6 !important;
         cursor: pointer !important;
-        transition: all 0.3s ease !important;
+        transition: all 0.2s ease !important;
         min-width: 160px !important;
-        text-align: center !important;
+        display: flex !important;
         justify-content: center !important;
+        align-items: center !important;
     }
 
-    /* 4. Hover and Selected states */
+    /* 3. Target the text inside the button - ENSURE VISIBILITY */
+    [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {
+        color: #212529 !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        margin: 0 !important;
+    }
+
+    /* 4. HIDE ONLY THE RADIO DOT (The first div inside the label) */
+    [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
+        display: none !important;
+    }
+
+    /* 5. Hover Effect */
     [data-testid="stRadio"] div[role="radiogroup"] label:hover {
         background-color: #e9ecef !important;
-        border-color: #adb5bd !important;
-    }
-    
-    /* Highlight the selected button (Streamlit uses aria-checked) */
-    [data-testid="stRadio"] div[role="radiogroup"] label[data-baseweb="radio"] {
-        /* This targets the container when selected */
+        border-color: #EB0A1E !important;
     }
 
-    /* --- Detailed Solution Cards --- */
+    /* 6. Selected State (Visual feedback) */
+    [data-testid="stRadio"] div[role="radiogroup"] [aria-checked="true"] {
+        background-color: #eeeeee !important;
+        border: 2px solid #EB0A1E !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+
+    /* --- Solution Detail Cards --- */
     .detail-card {
         background-color: #ffffff;
         padding: 15px;
@@ -100,7 +104,7 @@ def load_data():
         try:
             df = pd.read_csv(target, encoding=enc)
             df.columns = df.columns.str.strip()
-            # Map statuses as requested
+            # Map statuses
             status_map = {'Green': 'Have solution', 'Yellow': 'Solution under develop', 'Red': "Doesn't have solution"}
             df['Status'] = df['Status'].map(status_map)
             return df
@@ -116,20 +120,19 @@ if not df.empty:
     # 3. Theme Selector (Rectangle Buttons)
     st.write("### 🏷️ Select Maturity Theme")
     theme_list = sorted(df['Theme'].dropna().unique().tolist())
-    # Added horizontal=True here
     selected_theme = st.radio("Theme Selector", theme_list, horizontal=True, label_visibility="collapsed")
     
     theme_df = df[df['Theme'] == selected_theme]
 
     if not theme_df.empty:
-        # 4. Level Map and Overview Chart
+        # 4. Overview Chart
         level_map = theme_df[['Level', 'Level Name']].drop_duplicates().sort_values('Level')
         y_vals = level_map['Level'].tolist()
         y_text = level_map['Level Name'].tolist()
         
         color_map = {"Have solution": "#28A745", "Solution under develop": "#FFD700", "Doesn't have solution": "#FF4D4D"}
         
-        # Priority for summary chart
+        # Priority logic for summary chart
         st_ord = {'Doesn\'t have solution': 0, 'Solution under develop': 1, 'Have solution': 2}
         overview_data = theme_df.sort_values(by='Status', key=lambda x: x.map(st_ord)).groupby(['Company', 'Level']).first().reset_index()
 
