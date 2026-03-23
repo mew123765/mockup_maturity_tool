@@ -6,60 +6,62 @@ import os
 # 1. Page Configuration
 st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 
-# --- CUSTOM CSS: COMPACT & BRANDED LOOK ---
+# --- CUSTOM CSS: TAB & YOKOTEN FIX ---
 st.markdown('''
 <style>
-/* Horizontal Radio Buttons as 'Tabs' */
+/* 1. RADIO BUTTONS (Tabs) - Dark text on light background */
 [data-testid="stRadio"] div[role="radiogroup"] {
     flex-direction: row !important;
     display: flex !important;
     gap: 8px !important;
-    flex-wrap: wrap !important;
 }
-
 [data-testid="stRadio"] div[role="radiogroup"] label {
-    background-color: #f1f3f5 !important; /* Light grey background */
+    background-color: #f1f3f5 !important;
     padding: 10px 20px !important;
     border-radius: 6px !important;
     border: 1px solid #ced4da !important;
     cursor: pointer !important;
-    min-width: 150px !important;
-    display: flex !important;
-    justify-content: center !important;
 }
-
-/* Force Text Color to be Visible (Black) */
+/* Force Radio Text to Black */
 [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {
-    color: #111111 !important; /* Deep black/grey text */
+    color: #111111 !important;
     font-weight: 700 !important;
-    margin: 0 !important;
 }
-
-/* Hide the original small radio circle */
-[data-testid="stRadio"] div[role="radiogroup"] label > div:first-child { 
-    display: none !important; 
-}
-
-/* Active Tab Styling (Toyota Red Border) */
+[data-testid="stRadio"] div[role="radiogroup"] label > div:first-child { display: none !important; }
 [data-testid="stRadio"] div[role="radiogroup"] [aria-checked="true"] {
     background-color: #ffffff !important;
-    border: 2px solid #EB0A1E !important; /* Toyota Red */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    border: 2px solid #EB0A1E !important;
 }
 
-/* Detail Cards visibility */
+/* 2. YOKOTEN STATUS BOXES - Force Green/Red backgrounds */
+.yokoten-box {
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 800 !important;
+    color: white !important; /* White text for contrast on colored background */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 5px;
+}
+.yokoten-can {
+    background-color: #28A745 !important; /* Force Green */
+    border: 1px solid #1e7e34;
+}
+.yokoten-cant {
+    background-color: #DC3545 !important; /* Force Red */
+    border: 1px solid #bd2130;
+}
+
+/* 3. DETAIL CARDS */
 .detail-card {
     background-color: #ffffff; 
     padding: 15px; 
     border-radius: 8px;
-    border: 1px solid #dee2e6; 
-    margin-bottom: 10px;
+    border: 1px solid #dee2e6;
     color: #111111 !important;
 }
-.card-title { color: #6c757d; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; }
-.card-content { color: #000000 !important; font-size: 1rem; }
-
-.block-container { padding-top: 2rem !important; }
+.card-title { color: #6c757d; font-size: 0.8rem; font-weight: bold; }
 </style>
 ''', unsafe_allow_html=True)
 
