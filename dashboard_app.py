@@ -6,7 +6,7 @@ import os
 # 1. Page Configuration
 st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 
-# --- REFINED CSS FOR VISIBLE TEXT BUTTONS ---
+# --- REFINED CSS FOR VISIBLE TEXT BUTTONS & LAYOUT ---
 st.markdown("""
     <style>
     /* 1. Force horizontal layout for radio buttons */
@@ -39,18 +39,16 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* 4. HIDE ONLY THE RADIO DOT (The first div inside the label) */
+    /* 4. HIDE ONLY THE RADIO DOT */
     [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
         display: none !important;
     }
 
-    /* 5. Hover Effect */
+    /* 5. Hover and Selected States */
     [data-testid="stRadio"] div[role="radiogroup"] label:hover {
         background-color: #e9ecef !important;
         border-color: #EB0A1E !important;
     }
-
-    /* 6. Selected State (Visual feedback) */
     [data-testid="stRadio"] div[role="radiogroup"] [aria-checked="true"] {
         background-color: #eeeeee !important;
         border: 2px solid #EB0A1E !important;
@@ -104,8 +102,12 @@ def load_data():
         try:
             df = pd.read_csv(target, encoding=enc)
             df.columns = df.columns.str.strip()
-            # Map statuses
-            status_map = {'Green': 'Have solution', 'Yellow': 'Solution under develop', 'Red': "Doesn't have solution"}
+            # Map statuses as requested
+            status_map = {
+                'Green': 'Have solution', 
+                'Yellow': 'Solution under develop', 
+                'Red': "Doesn't have solution"
+            }
             df['Status'] = df['Status'].map(status_map)
             return df
         except: continue
@@ -128,13 +130,20 @@ if not df.empty:
         # 4. Overview Chart
         level_map = theme_df[['Level', 'Level Name']].drop_duplicates().sort_values('Level')
         y_vals = level_map['Level'].tolist()
-        y_text = level_map['Level Name'].tolist()
         
-        color_map = {"Have solution": "#28A745", "Solution under develop": "#FFD700", "Doesn't have solution": "#FF4D4D"}
+        # --- UPDATE: Combine Level Number and Name for Y-Axis ---
+        y_text = [f"L{row['Level']}: {row['Level Name']}" for _, row in level_map.iterrows()]
         
-        # Priority logic for summary chart
-        st_ord = {'Doesn\'t have solution': 0, 'Solution under develop': 1, 'Have solution': 2}
-        overview_data = theme_df.sort_values(by='Status', key=lambda x: x.map(st_ord)).groupby(['Company', 'Level']).first().reset_index()
+        color_map = {
+            "Have solution": "#28A745", 
+            "Solution under develop": "#FFD700", 
+            "Doesn't have solution": "#FF4D4D"
+        }
+        
+        # Priority logic for summary chart (Show "worst" status if multiple exist)
+        st_ord = {"Doesn't have solution": 0, "Solution under develop": 1, "Have solution": 2}
+        overview_data = theme_df.sort_values(by='Status', key=lambda x: x.map(st_ord))
+        overview_data = overview_data.groupby(['Company', 'Level']).first().reset_index()
 
         fig1 = px.scatter(
             overview_data, x="Company", y="Level", color="Status",
@@ -147,6 +156,8 @@ if not df.empty:
             }
         )
         fig1.update_traces(marker=dict(size=35, line=dict(width=1, color='DarkSlateGrey')))
+        
+        # Apply the new L#: Level Name formatting here
         fig1.update_yaxes(tickvals=y_vals, ticktext=y_text)
         st.plotly_chart(fig1, use_container_width=True)
 
@@ -162,8 +173,11 @@ if not df.empty:
         level_df = theme_df[theme_df['Level'] == selected_level_val]
 
         if not level_df.empty:
-            st.subheader(f"Level {selected_level_val}: {level_map[level_map['Level']==selected_level_val]['Level Name'].iloc[0]}")
+            # Get specific level name for title
+            current_lname = level_map[level_map['Level'] == selected_level_val]['Level Name'].iloc[0]
+            st.subheader(f"Level {selected_level_val} Detail: {current_lname}")
             
+            # Drill-down Chart (Shows all use cases for the level)
             fig2 = px.scatter(
                 level_df, x="Company", y="Use Case", color="Status",
                 color_discrete_map=color_map, symbol_sequence=['square'],
@@ -190,6 +204,7 @@ if not df.empty:
                 with c2: st.markdown(f'<div class="detail-card"><div class="card-title">Description</div><div class="card-content">{detail["Solution Description"]}</div></div>', unsafe_allow_html=True)
                 with c3: st.markdown(f'<div class="detail-card"><div class="card-title">Function</div><div class="card-content">{detail["Function in Solution"]}</div></div>', unsafe_allow_html=True)
                 
+                # Yokoten Status Indicator
                 st.write("**Yokoten Capability:**")
                 is_yokoten = str(detail['Capability to implement to others']).strip().lower() == 'yes'
                 if is_yokoten:
