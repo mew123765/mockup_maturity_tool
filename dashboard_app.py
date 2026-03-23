@@ -6,36 +6,36 @@ import os
 # 1. Page Configuration
 st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 
-# --- IMPROVED CSS FOR 1080P AND LARGER TEXT ---
+# --- CSS: REVERTED TO STANDARD SIZES EXCEPT FOR BUTTON SHAPE ---
 st.markdown("""
     <style>
     /* 1. Force horizontal layout for radio buttons */
     [data-testid="stRadio"] div[role="radiogroup"] {
         flex-direction: row !important;
         display: flex !important;
-        gap: 15px !important;
+        gap: 12px !important;
         flex-wrap: wrap !important;
     }
 
-    /* 2. Style the Label (The Button Rectangle) with 50% larger text */
+    /* 2. Style the Label (The Button Rectangle) - Text size REVERTED to 1rem */
     [data-testid="stRadio"] div[role="radiogroup"] label {
         background-color: #f8f9fa !important;
-        padding: 15px 30px !important;
+        padding: 12px 24px !important;
         border-radius: 6px !important;
         border: 1px solid #dee2e6 !important;
         cursor: pointer !important;
         transition: all 0.2s ease !important;
-        min-width: 200px !important;
+        min-width: 160px !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
     }
 
-    /* 3. Target the text inside the button - 50% LARGER (1.5rem) */
+    /* 3. Target the text inside the button - REVERTED to 1rem */
     [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {
         color: #212529 !important;
-        font-weight: 700 !important;
-        font-size: 1.5rem !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
         margin: 0 !important;
     }
 
@@ -52,39 +52,39 @@ st.markdown("""
     [data-testid="stRadio"] div[role="radiogroup"] [aria-checked="true"] {
         background-color: #ffffff !important;
         border: 3px solid #EB0A1E !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
     }
 
-    /* --- Solution Detail Cards (Larger Text) --- */
+    /* --- Solution Detail Cards - REVERTED to 1rem content --- */
     .detail-card {
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
+        padding: 15px;
+        border-radius: 8px;
         border: 1px solid #dee2e6;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         margin-bottom: 15px;
-        min-height: 140px;
+        min-height: 110px;
     }
     .card-title {
         color: #6c757d;
-        font-size: 1.1rem;
+        font-size: 0.8rem;
         font-weight: bold;
         text-transform: uppercase;
-        margin-bottom: 8px;
+        margin-bottom: 5px;
     }
     .card-content {
         color: #111111 !important;
-        font-size: 1.4rem;
+        font-size: 1rem !important;
         font-weight: 500;
     }
 
-    /* --- Yokoten Status Boxes (Larger) --- */
+    /* --- Yokoten Status Boxes - REVERTED to 1.1rem --- */
     .yokoten-box {
-        padding: 15px;
-        border-radius: 6px;
+        padding: 12px;
+        border-radius: 4px;
         text-align: center;
         font-weight: 800;
-        font-size: 1.6rem;
+        font-size: 1.1rem;
         color: white !important;
         text-transform: uppercase;
         margin-top: 10px;
@@ -149,11 +149,11 @@ if not df.empty:
             }
         )
         fig1.update_traces(marker=dict(size=60, line=dict(width=2, color='DarkSlateGrey')))
-        fig1.update_yaxes(tickvals=y_vals, ticktext=y_text)
         
-        # 50% Larger Font Settings
+        # --- INCREASED TEXT FOR X, Y AXIS AND LEGEND ONLY ---
         fig1.update_layout(
-            font=dict(size=18),
+            xaxis=dict(tickfont=dict(size=18), title_font=dict(size=18)),
+            yaxis=dict(tickvals=y_vals, ticktext=y_text, tickfont=dict(size=18), title_font=dict(size=18)),
             legend=dict(font=dict(size=18)),
             margin=dict(l=50, r=50, t=50, b=50)
         )
@@ -182,8 +182,10 @@ if not df.empty:
             )
             fig2.update_traces(marker=dict(size=45, line=dict(width=1.5, color='DarkSlateGrey')))
             
+            # --- INCREASED TEXT FOR X, Y AXIS AND LEGEND ONLY ---
             fig2.update_layout(
-                font=dict(size=18),
+                xaxis=dict(tickfont=dict(size=18), title_font=dict(size=18)),
+                yaxis=dict(tickfont=dict(size=18), title_font=dict(size=18)),
                 legend=dict(font=dict(size=18)),
                 margin=dict(l=50, r=50, t=50, b=50)
             )
