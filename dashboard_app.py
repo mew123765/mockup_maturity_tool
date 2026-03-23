@@ -55,17 +55,33 @@ st.markdown('''
 </style>
 ''', unsafe_allow_html=True)
 
-# 2. Data Loader
+# 2. Data Loader with Column Normalization
 @st.cache_data
 def load_data():
-    target = 'maturity_mock_data.csv'
-    if not os.path.exists(target):
-        st.error("Data file 'final_maturity_data.csv' not found.")
+    file_name = 'maturity_mock_data.csv'
+    if not os.path.exists(file_name):
+        st.error(f"Data file '{file_name}' not found. Please ensure it is in the same directory.")
         return pd.DataFrame()
-    df = pd.read_csv(target)
-    # Map the Red/Yellow/Green to clear legend labels
+    
+    df = pd.read_csv(file_name)
+    
+    # Clean column names (strip spaces and handle case sensitivity)
+    df.columns = [c.strip() for c in df.columns]
+    
+    # Standardize 'Use Case' and 'Status' regardless of original casing
+    cols_map = {c.lower(): c for c in df.columns}
+    if 'use case' in cols_map:
+        df = df.rename(columns={cols_map['use case']: 'Use Case'})
+    if 'status' in cols_map:
+        df = df.rename(columns={cols_map['status']: 'Status'})
+        
+    # Map the Status to clear legend labels
     status_map = {'Green': 'Have solution', 'Yellow': 'Solution under develop', 'Red': "Doesn't have solution"}
-    df['Status_Label'] = df['Status'].map(status_map)
+    if 'Status' in df.columns:
+        df['Status_Label'] = df['Status'].map(status_map).fillna("Unknown Status")
+    else:
+        st.error("Column 'Status' not found in data file.")
+        
     return df
 
 df = load_data()
@@ -74,10 +90,15 @@ if not df.empty:
     st.title("🏭 Technology Maturity Dashboard")
     
     # --- 1. THEME SELECTION ---
-    theme_list = sorted(df['Theme'].dropna().unique().tolist())
-    st.write("**1. Select Maturity Theme**")
-    selected_theme = st.radio("Theme Selector", theme_list, horizontal=True, label_visibility="collapsed")
-    theme_df = df[df['Theme'] == selected_theme]
+    theme_col = 'Theme'
+    if theme_col in df.columns:
+        theme_list = sorted(df[theme_col].dropna().unique().tolist())
+        st.write("**1. Select Maturity Theme**")
+        selected_theme = st.radio("Theme Selector", theme_list, horizontal=True, label_visibility="collapsed")
+        theme_df = df[df[theme_col] == selected_theme]
+    else:
+        st.error("Column 'Theme' not found.")
+        st.stop()
 
     if not theme_df.empty:
         # --- 2. OVERVIEW CHART (LEVELS) ---
@@ -86,8 +107,8 @@ if not df.empty:
         y_text = [f"L{row['Level']}: {row['Level Name']}" for _, row in level_map.iterrows()]
         color_map = {"Have solution": "#28A745", "Solution under develop": "#FFD700", "Doesn't have solution": "#FF4D4D"}
         
-        # Aggregate to show one summary dot per company per level
-        status_priority = {'Have solution': 2, 'Solution under develop': 1, "Doesn't have solution": 0}
+        # Aggregate to show one summary dot per company per level (Priority: Green > Yellow > Red)
+        status_priority = {'Have solution': 2, 'Solution under develop': 1, "Doesn't have solution": 0, "Unknown Status": -1}
         ov_data = theme_df.sort_values(by='Status_Label', key=lambda x: x.map(status_priority), ascending=False)
         ov_data = ov_data.groupby(['Company', 'Level', 'Level Name'])['Status_Label'].first().reset_index()
 
@@ -96,7 +117,8 @@ if not df.empty:
             color_discrete_map=color_map, symbol_sequence=['square'], height=380,
             category_orders={
                 "Level": sorted(y_vals, reverse=True),
-                "Company": ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"]
+                "Company": ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"],
+                "Status_Label": ["Have solution", "Solution under develop", "Doesn't have solution"]
             }
         )
         fig1.update_traces(marker=dict(size=45, line=dict(width=2, color='DarkSlateGrey')))
@@ -115,12 +137,12 @@ if not df.empty:
             current_lname = level_map[level_map['Level'] == selected_level]['Level Name'].iloc[0]
             st.markdown(f"**Level {selected_level} Detail:** *{current_lname}*")
             
-            # Dynamic Height based on Use Cases
-            num_use_cases = len(level_df['Use case'].unique())
+            # Dynamic Height based on actual Number of Use Cases in the file
+            num_use_cases = len(level_df['Use Case'].unique())
             chart_height = max(300, num_use_cases * 45)
 
             fig2 = px.scatter(
-                level_df, x="Company", y="Use case", color="Status_Label",
+                level_df, x="Company", y="Use Case", color="Status_Label",
                 color_discrete_map=color_map, symbol_sequence=['square'], height=chart_height,
                 category_orders={
                     "Company": ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"],
@@ -139,10 +161,10 @@ if not df.empty:
                 target_affiliate = st.selectbox("Select Affiliate:", sorted(level_df['Company'].unique()))
             with d_col2:
                 aff_spec = level_df[level_df['Company'] == target_affiliate]
-                target_use_case = st.selectbox("Select Use Case:", sorted(aff_spec['Use case'].unique()))
+                target_use_case = st.selectbox("Select Use Case:", sorted(aff_spec['Use Case'].unique()))
 
             if target_use_case:
-                detail = aff_spec[aff_spec['Use case'] == target_use_case].iloc[0]
+                detail = aff_spec[aff_spec['Use Case'] == target_use_case].iloc[0]
                 c1, c2, c3 = st.columns([2, 2, 1])
                 with c1: st.markdown(f'<div class="detail-card"><div class="card-title">Solution Name</div><div class="card-content">{detail["Solution Name"]}</div></div>', unsafe_allow_html=True)
                 with c2: st.markdown(f'<div class="detail-card"><div class="card-title">Function</div><div class="card-content">{detail["Function in Solution"]}</div></div>', unsafe_allow_html=True)
