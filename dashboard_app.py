@@ -6,68 +6,99 @@ import os
 # 1. Page Configuration
 st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 
-# Custom CSS for Buttons, Detail Cards, and Yokoten Boxes
+# Custom CSS for Horizontal Rectangle Buttons and Yokoten UI
 st.markdown("""
     <style>
-    /* Radio Buttons Styling */
+    /* --- Horizontal Rectangle Button Styling --- */
     div.row-widget.stRadio > div {
         flex-direction: row;
         display: flex;
-        gap: 10px;
+        gap: 12px;
         flex-wrap: wrap;
+        justify-content: flex-start;
     }
+    
+    /* Individual Button Style */
     div.row-widget.stRadio label {
-        background-color: #f1f3f5;
-        padding: 8px 16px;
-        border-radius: 5px;
-        border: 1px solid #ced4da;
+        background-color: #f8f9fa;
+        padding: 12px 24px;
+        border-radius: 4px; /* Rectangle style */
+        border: 1px solid #dee2e6;
         cursor: pointer;
-        transition: 0.2s;
+        transition: all 0.3s ease;
         font-weight: 600;
-        color: #212529 !important;
+        color: #495057 !important;
+        min-width: 150px;
+        text-align: center;
+        display: inline-block;
     }
+
+    /* Hover State */
+    div.row-widget.stRadio label:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+    }
+
+    /* Active/Selected State (Streamlit specific hack) */
+    div.row-widget.stRadio div[data-testid="stMarkdownContainer"] p {
+        margin-bottom: 0px;
+    }
+    
+    /* Hide the radio circle */
     div.row-widget.stRadio input {
         display: none;
     }
-    
-    /* Solution Detail Cards */
+
+    /* --- Solution Detail Cards --- */
     .detail-card {
         background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
+        padding: 18px;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        margin-bottom: 10px;
-        min-height: 100px;
+        margin-bottom: 15px;
+        min-height: 110px;
     }
     .card-title {
-        color: #6c757d;
+        color: #868e96;
         font-size: 0.75rem;
-        font-weight: bold;
+        font-weight: 700;
         text-transform: uppercase;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
     }
     .card-content {
         color: #212529 !important;
-        font-size: 0.95rem;
+        font-size: 1rem;
         font-weight: 500;
+        line-height: 1.5;
     }
 
-    /* Yokoten Indicator Boxes */
-    .yokoten-box {
-        padding: 10px;
-        border-radius: 5px;
-        text-align: center;
-        font-weight: bold;
-        font-size: 1rem;
-        color: white !important;
+    /* --- Yokoten Status Boxes --- */
+    .yokoten-container {
         margin-top: 10px;
+    }
+    .yokoten-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
+    .yokoten-box {
+        padding: 12px;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: white !important;
+        text-transform: uppercase;
     }
     .yokoten-can {
         background-color: #28A745;
+        border: 1px solid #1e7e34;
     }
     .yokoten-cant {
         background-color: #DC3545;
+        border: 1px solid #bd2130;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -84,7 +115,7 @@ def load_data():
             df = pd.read_csv(target, encoding=enc)
             df.columns = df.columns.str.strip()
             
-            # Map Status to new labels requested
+            # Map Status to your requested labels
             status_map = {
                 'Green': 'Have solution',
                 'Yellow': 'Solution under develop',
@@ -102,7 +133,7 @@ if not df.empty:
     st.title("🏭 Technology Maturity Dashboard")
     st.markdown("---")
 
-    # 3. Theme Selector (Buttons)
+    # 3. Theme Selector (Horizontal Rectangle Buttons)
     st.write("### 🏷️ Select Maturity Theme")
     theme_list = sorted(df['Theme'].dropna().unique().tolist())
     selected_theme = st.radio("Theme Selector", theme_list, label_visibility="collapsed")
@@ -115,14 +146,13 @@ if not df.empty:
         y_vals = level_map['Level'].tolist()
         y_text = level_map['Level Name'].tolist()
 
-        # Define specific colors for the new labels
         color_map = {
             "Have solution": "#28A745", 
             "Solution under develop": "#FFD700", 
             "Doesn't have solution": "#FF4D4D"
         }
         
-        # Summary View: Critical status first
+        # Summary View (Prioritize showing issues if multiple cases exist)
         status_order = {'Doesn\'t have solution': 0, 'Solution under develop': 1, 'Have solution': 2}
         overview_data = theme_df.sort_values(by='Status', key=lambda x: x.map(status_order))
         overview_data = overview_data.groupby(['Company', 'Level']).first().reset_index()
@@ -141,7 +171,7 @@ if not df.empty:
         fig1.update_yaxes(tickvals=y_vals, ticktext=y_text)
         st.plotly_chart(fig1, use_container_width=True)
 
-        # 5. Level Selector (Buttons)
+        # 5. Level Selector (Horizontal Rectangle Buttons)
         st.markdown("---")
         st.write("### 📶 Select Level to Explore Use Cases")
         
@@ -165,8 +195,7 @@ if not df.empty:
                 color_discrete_map=color_map, symbol_sequence=['square'],
                 height=450,
                 category_orders={
-                    "Company": ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"],
-                    "Status": ["Have solution", "Solution under develop", "Doesn't have solution"]
+                    "Company": ["TMA", "TMT", "TMMIN", "STM", "ASSB", "TMP", "TMV", "TMY", "IMC"]
                 }
             )
             fig2.update_traces(marker=dict(size=25, line=dict(width=1, color='DarkSlateGrey')))
@@ -186,7 +215,7 @@ if not df.empty:
             if target_use_case:
                 detail = aff_specific_df[aff_specific_df['Use Case'] == target_use_case].iloc[0]
                 
-                # Top row for text boxes
+                # Solution Content Row
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.markdown(f'<div class="detail-card"><div class="card-title">Solution Name</div><div class="card-content">{detail["Solution Name"]}</div></div>', unsafe_allow_html=True)
@@ -195,7 +224,8 @@ if not df.empty:
                 with c3:
                     st.markdown(f'<div class="detail-card"><div class="card-title">Main Function</div><div class="card-content">{detail["Function in Solution"]}</div></div>', unsafe_allow_html=True)
                 
-                # Bottom row for the Yokoten Box
+                # Yokoten Box Row
+                st.markdown('<div class="yokoten-container">', unsafe_allow_html=True)
                 st.write("**Yokoten Capability:**")
                 is_yokoten = str(detail['Capability to implement to others']).strip().lower() == 'yes'
                 
@@ -203,5 +233,6 @@ if not df.empty:
                     st.markdown('<div class="yokoten-box yokoten-can">Can Yokoten</div>', unsafe_allow_html=True)
                 else:
                     st.markdown('<div class="yokoten-box yokoten-cant">Cann\'t Yokoten</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
 else:
-    st.error("Data file not found or empty.")
+    st.error("CSV file not found. Please upload 'maturity_mock_data.csv' to your repository.")
