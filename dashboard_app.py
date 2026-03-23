@@ -35,16 +35,12 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
-    filename = 'maturity_mock_data.csv' # CHANGE THIS if your file is named differently
-    
-    # Debugging: Show files in the current directory if it fails
-    if not os.path.exists(filename):
-        st.error(f"❌ File '{filename}' not found.")
-        st.write("Files actually found in your GitHub folder:")
-        st.write(os.listdir(".")) 
+    try:
+        # Tries to load the generated mock data or your uploaded structured CSV
+        return pd.read_csv('maturity_mock_data.csv')
+    except:
+        st.error("Error: 'maturity_mock_data.csv' not found in repository.")
         return pd.DataFrame()
-    
-    return pd.read_csv(filename)
 
 df = load_data()
 
