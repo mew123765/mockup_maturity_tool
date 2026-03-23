@@ -6,64 +6,72 @@ import os
 # 1. Page Configuration
 st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 
-# --- CUSTOM CSS: TAB & YOKOTEN FIX ---
+# --- UPDATED CUSTOM CSS ---
 st.markdown('''
 <style>
-/* 1. RADIO BUTTONS (Tabs) - Dark text on light background */
-[data-testid="stRadio"] div[role="radiogroup"] {
-    flex-direction: row !important;
-    display: flex !important;
-    gap: 8px !important;
-}
-[data-testid="stRadio"] div[role="radiogroup"] label {
-    background-color: #f1f3f5 !important;
-    padding: 10px 20px !important;
-    border-radius: 6px !important;
-    border: 1px solid #ced4da !important;
-    cursor: pointer !important;
-}
-/* Force Radio Text to Black */
-[data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {
-    color: #111111 !important;
-    font-weight: 700 !important;
-}
-[data-testid="stRadio"] div[role="radiogroup"] label > div:first-child { display: none !important; }
-[data-testid="stRadio"] div[role="radiogroup"] [aria-checked="true"] {
-    background-color: #ffffff !important;
-    border: 2px solid #EB0A1E !important;
+/* ... (Keep your existing Radio/Tab CSS here) ... */
+
+/* Container for the 4/5 and 1/5 split */
+.detail-container {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
 }
 
-/* 2. YOKOTEN STATUS BOXES - Force Green/Red backgrounds */
-.yokoten-box {
-    padding: 12px;
-    border-radius: 6px;
-    text-align: center;
-    font-weight: 800 !important;
-    color: white !important; /* White text for contrast on colored background */
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 5px;
-}
-.yokoten-can {
-    background-color: #28A745 !important; /* Force Green */
-    border: 1px solid #1e7e34;
-}
-.yokoten-cant {
-    background-color: #DC3545 !important; /* Force Red */
-    border: 1px solid #bd2130;
+.text-stack {
+    flex: 4; /* 4/5 Width */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-/* 3. DETAIL CARDS */
+.status-side {
+    flex: 1; /* 1/5 Width */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Specific Box Styling */
 .detail-card {
     background-color: #ffffff; 
-    padding: 15px; 
+    padding: 12px; 
     border-radius: 8px;
     border: 1px solid #dee2e6;
     color: #111111 !important;
 }
-.card-title { color: #6c757d; font-size: 0.8rem; font-weight: bold; }
+
+.card-title { color: #6c757d; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+.card-content { color: #000000 !important; font-size: 0.95rem; }
+
+/* Scrollable Box for Function */
+.scroll-box {
+    max-height: 150px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Yokoten Colors */
+.yokoten-box {
+    width: 100%;
+    height: 100%;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 800 !important;
+    color: white !important;
+    text-transform: uppercase;
+    text-align: center;
+    font-size: 1.1rem;
+}
+.yokoten-can { background-color: #28A745 !important; border: 1px solid #1e7e34; }
+.yokoten-cant { background-color: #DC3545 !important; border: 1px solid #bd2130; }
 </style>
 ''', unsafe_allow_html=True)
+
+# ... (Keep the rest of your script until the Drill-Down section) ...
 
 # 2. Robust Data Loader
 @st.cache_data
@@ -166,12 +174,34 @@ if not df.empty:
 
             if target_use_case:
                 detail = aff_spec[aff_spec['Use Case'] == target_use_case].iloc[0]
-                c1, c2, c3 = st.columns([2, 2, 1])
-                with c1: st.markdown(f'<div class="detail-card"><div class="card-title">Solution Name</div><div class="card-content">{detail.get("Solution Name", "N/A")}</div></div>', unsafe_allow_html=True)
-                with c2: st.markdown(f'<div class="detail-card"><div class="card-title">Function</div><div class="card-content">{detail.get("Function in Solution", "N/A")}</div></div>', unsafe_allow_html=True)
-                with c3:
-                    is_yokoten = str(detail.get('Capability to implement to others', 'No')).strip().lower() == 'yes'
-                    y_cls = "yokoten-can" if is_yokoten else "yokoten-cant"
-                    y_txt = "Can Yokoten" if is_yokoten else "Cannot Yokoten"
-                    st.markdown(f'<div class="yokoten-box {y_cls}">{y_txt}</div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="detail-card"><div class="card-title">Solution Description</div><div class="card-content">{detail.get("Solution Description", "N/A")}</div></div>', unsafe_allow_html=True)
+    
+                # Check Yokoten Status
+                is_yokoten = str(detail.get('Capability to implement to others', 'No')).strip().lower() == 'yes'
+                y_cls = "yokoten-can" if is_yokoten else "yokoten-cant"
+                y_txt = "Can Yokoten" if is_yokoten else "Cannot Yokoten"
+
+                # Custom HTML Layout
+                st.markdown(f'''
+                <div class="detail-container">
+                    <div class="text-stack">
+                        <div class="detail-card" style="flex: 0;">
+                            <div class="card-title">Solution Name</div>
+                            <div class="card-content">{detail.get("Solution Name", "N/A")}</div>
+                        </div>
+                        <div class="detail-card" style="flex: 1;">
+                            <div class="card-title">Solution Description</div>
+                            <div class="card-content">{detail.get("Solution Description", "N/A")}</div>
+                        </div>
+                        <div class="detail-card" style="flex: 2;">
+                            <div class="card-title">Function (Scrollable)</div>
+                            <div class="card-content scroll-box">{detail.get("Function in Solution", "N/A")}</div>
+                        </div>
+                    </div>
+        
+                    <div class="status-side">
+                        <div class="yokoten-box {y_cls}">
+                            {y_txt}
+                        </div>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
