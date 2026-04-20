@@ -9,7 +9,18 @@ st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 # --- UPDATED CUSTOM CSS ---
 st.markdown('''
 <style>
-/* ... (Keep your existing Radio/Tab CSS here) ... */
+/* Login Card Styling (High Priority Layer) */
+.login-card {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 10000; background: white; padding: 40px; border-radius: 15px;
+    border: 2px solid #EB0A1E; box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    text-align: center; width: 400px;
+}
+
+/* Background Blur - Active only when not authenticated */
+.blur-content {
+    filter: blur(15px); pointer-events: none; user-select: none;
+}
 
 /* Container for the 4/5 and 1/5 split */
 .detail-container {
@@ -19,17 +30,10 @@ st.markdown('''
 }
 
 .text-stack {
-    flex: 4; /* 4/5 Width */
+    flex: 4; 
     display: flex;
     flex-direction: column;
     gap: 30px;
-}
-
-.status-side {
-    flex: 1; /* 1/5 Width */
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* Specific Box Styling */
@@ -51,11 +55,10 @@ st.markdown('''
     padding-right: 5px;
 }
 
-/* Yokoten Colors */
+/* Yokoten & Folder Buttons */
 .yokoten-box {
     width: 100%;
-    height: 100%;
-    min-height: 100px;
+    padding: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -65,32 +68,47 @@ st.markdown('''
     text-transform: uppercase;
     text-align: center;
     font-size: 1.1rem;
+    margin-bottom: 10px;
 }
 .yokoten-can { background-color: #28A745 !important; border: 1px solid #1e7e34; }
 .yokoten-cant { background-color: #DC3545 !important; border: 1px solid #bd2130; }
+
+.folder-btn {
+    display: block; 
+    width: 100%; 
+    padding: 15px;
+    background-color: #0078D4; 
+    color: white !important;
+    text-align: center; 
+    border-radius: 8px; 
+    text-decoration: none;
+    font-weight: bold; 
+    font-size: 0.9rem;
+    border: 1px solid #005a9e;
+}
+.folder-btn:hover {
+    background-color: #005a9e;
+    text-decoration: none;
+}
 </style>
 ''', unsafe_allow_html=True)
-
-# ... (Keep the rest of your script until the Drill-Down section) ...
 
 # 1.1. Authentication Logic
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
 if not st.session_state["authenticated"]:
-    # Login card (Sharp)
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
     st.write("### 🔒 Toyota Enterprise Access")
     pwd = st.text_input("Enter Password", type="password", key="login_field")
     if st.button("Unlock Dashboard", use_container_width=True):
-        if pwd == "Toyota2026": # Create your password here
+        if pwd == "Toyota2026": 
             st.session_state["authenticated"] = True
             st.rerun()
         else:
             st.error("Incorrect Password")
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Blurred background simulation
     st.markdown('<div class="blur-content">', unsafe_allow_html=True)
     st.title("Loading Secure Data...")
     st.write("█" * 100)
@@ -119,7 +137,6 @@ def load_data():
     if 'Status' in df.columns:
         df['Status_Label'] = df['Status'].map(status_map).fillna("Unknown Status")
     else:
-        # Emergency Fallback if column is still missing
         df['Status'] = 'Red'
         df['Status_Label'] = "Doesn't have solution"
         
@@ -145,7 +162,6 @@ if not df.empty:
         
         status_priority = {'Have solution': 2, 'Solution under develop': 1, "Doesn't have solution": 0, "Unknown Status": -1}
         
-        # Aggregation for top-level dots
         ov_data = theme_df.copy()
         ov_data = ov_data.sort_values(by='Status_Label', key=lambda x: x.map(status_priority), ascending=False)
         ov_data = ov_data.groupby(['Company', 'Level', 'Level Name'])['Status_Label'].first().reset_index()
@@ -188,7 +204,7 @@ if not df.empty:
                               legend=dict(orientation="h", y=1.1, x=1, title=None))
             st.plotly_chart(fig2, use_container_width=True)
 
-            # --- 4. DRILL-DOWN (Fixed Rendering) ---
+            # --- 4. DRILL-DOWN ---
             st.markdown("**3. Technical Solution Details**")
             d_col1, d_col2 = st.columns(2)
             with d_col1:
@@ -204,26 +220,25 @@ if not df.empty:
                 is_yokoten = str(detail.get('Capability to implement to others', 'No')).strip().lower() == 'yes'
                 y_cls = "yokoten-can" if is_yokoten else "yokoten-cant"
                 y_txt = "Can Yokoten" if is_yokoten else "Cannot Yokoten"
+                
+                # Get OneDrive URL
+                folder_url = detail.get("Folder_URL", "#")
 
-                # Using st.columns to handle the 4/5 and 1/5 split reliably
                 left_info, right_status = st.columns([4, 1])
 
                 with left_info:
-                    # Solution Name (Smallest)
                     st.markdown(f'''
                         <div class="detail-card">
                             <div class="card-title">Solution Name</div>
                             <div class="card-content">{detail.get("Solution Name", "N/A")}</div>
                         </div>''', unsafe_allow_html=True)
         
-                    # Solution Description (Medium)
                     st.markdown(f'''
                         <div class="detail-card">
                             <div class="card-title">Solution Description</div>
                             <div class="card-content">{detail.get("Solution Description", "N/A")}</div>
                         </div>''', unsafe_allow_html=True)
         
-                    # Function (Biggest + Scrollable)
                     st.markdown(f'''
                         <div class="detail-card">
                             <div class="card-title">Function (Scrollable)</div>
@@ -231,10 +246,10 @@ if not df.empty:
                         </div>''', unsafe_allow_html=True)
 
                 with right_status:
-                    # Status Box (Centered vertically via a div wrapper)
+                    # Combined Status Box and OneDrive Link
                     st.markdown(f'''
-                        <div style="height: 100%; display: flex; align-items: center; padding-top: 10px;">
-                            <div class="yokoten-box {y_cls}">
-                                {y_txt}
-                            </div>
-                        </div>''', unsafe_allow_html=True)
+                        <div class="yokoten-box {y_cls}">{y_txt}</div>
+                        <a href="{folder_url}" target="_blank" class="folder-btn">
+                            📁 View OneDrive Folder
+                        </a>
+                        ''', unsafe_allow_html=True)
