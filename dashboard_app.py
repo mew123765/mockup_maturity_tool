@@ -6,31 +6,38 @@ import os
 # 1. Page Configuration
 st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 
-# --- UPDATED CSS ---
+# --- UPDATED CSS (Fixed Blur) ---
 st.markdown('''
 <style>
-/* This blurs the entire app behind the login box */
-.stApp {
-    filter: ''' + ('blur(15px)' if not st.session_state.get("authenticated", False) else 'none') + ''';
+/* Main App Background Blur - only active when NOT authenticated */
+.blur-layer {
+    filter: blur(15px);
+    pointer-events: none;
+    user-select: none;
 }
 
-/* Position the login box in the center of the screen */
-.login-container {
+/* Login Box Styling - Always sharp and on top */
+.login-card {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 10000;
+    z-index: 999999; /* Extremely high priority */
     background: white;
-    padding: 30px;
+    padding: 40px;
     border-radius: 15px;
-    border: 1px solid #EB0A1E;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    border: 2px solid #EB0A1E;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
     text-align: center;
-    width: 350px;
+    width: 400px;
 }
 
-/* Yokoten & Folder Buttons */
+/* Fix for the input text color to ensure it is black */
+input {
+    color: #000000 !important;
+}
+
+/* Buttons and Yokoten */
 .yokoten-box {
     width: 100%; padding: 20px; border-radius: 8px;
     text-align: center; font-weight: 800; color: white !important;
@@ -48,33 +55,48 @@ st.markdown('''
 </style>
 ''', unsafe_allow_html=True)
 
-# 2. Password Protection Logic (Clean version)
+# 2. Authentication Logic
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
 if not st.session_state["authenticated"]:
-    # Using an empty placeholder to force the login box to show on top of everything
-    login_placeholder = st.empty()
+    # The login card is NOT inside the blurred layer
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    st.write("### 🔒 Toyota Enterprise Access")
+    st.write("Please enter the password to view confidential data.")
     
-    with login_placeholder.container():
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
-        st.write("### 🔒 Enterprise Access")
-        st.write("Enter the password to view Maturity Data.")
-        
-        # This is the actual input field
-        pwd = st.text_input("Password", type="password", label_visibility="collapsed")
-        
-        if st.button("Unlock Dashboard", use_container_width=True):
-            if pwd == "Toyota2026": # <--- Change your password here
-                st.session_state["authenticated"] = True
-                st.rerun()
-            else:
-                st.error("Incorrect Password")
-        st.markdown('</div>', unsafe_allow_html=True)
-    st.stop() # This prevents the rest of the app from loading until authenticated
+    # Text input for password
+    pwd = st.text_input("Access Key", type="password", label_visibility="collapsed", key="login_pwd")
+    
+    if st.button("Unlock Dashboard", use_container_width=True):
+        if pwd == "Toyota2026":
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect Password")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # We create a dummy blurred background so they can see the app exists but can't read it
+    st.markdown('<div class="blur-layer">', unsafe_allow_html=True)
+    st.title("Loading Dashboard...")
+    st.write("This content is protected and requires authentication.")
+    # Add a few fake lines to make the blur look real
+    st.markdown("### " + "█" * 20)
+    st.markdown("█" * 50)
+    st.markdown("█" * 40)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
 
-# --- THE REST OF YOUR DASHBOARD CODE STARTS HERE ---
-# (df = load_data(), charts, layout etc.)
+# --- 3. THE REST OF YOUR DASHBOARD CODE ---
+# Everything below here only runs AFTER authentication
+# Wrap it in a container to ensure no accidental blurring
+main_container = st.container()
+
+with main_container:
+    # load_data(), filters, charts, and your 4/5 layout with Folder_URL
+    # ... (Your existing code) ...
+    st.title("🏭 Technology Maturity Dashboard")
+
 
 # 3. Data Loading
 @st.cache_data
