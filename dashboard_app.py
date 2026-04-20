@@ -250,6 +250,6 @@ if not df.empty:
                     st.markdown(f'''
                         <div class="yokoten-box {y_cls}">{y_txt}</div>
                         <a href="{folder_url}" target="_blank" class="folder-btn">
-                            📁 View OneDrive Folder
+                            📁 View OneDrive Folder For More Detail
                         </a>
                         ''', unsafe_allow_html=True)
