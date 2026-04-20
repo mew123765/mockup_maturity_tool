@@ -93,7 +93,7 @@ st.markdown('''
 </style>
 ''', unsafe_allow_html=True)
 
-# 1.1. Authentication Logic
+# 1.1. Authentication Logic (Secure Version)
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
@@ -101,14 +101,17 @@ if not st.session_state["authenticated"]:
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
     st.write("### 🔒 Toyota Enterprise Access")
     pwd = st.text_input("Enter Password", type="password", key="login_field")
+    
     if st.button("Unlock Dashboard", use_container_width=True):
-        if pwd == "Toyota2026": 
+        # This line now pulls from the Streamlit Cloud Settings
+        if pwd == st.secrets["password"]: 
             st.session_state["authenticated"] = True
             st.rerun()
         else:
             st.error("Incorrect Password")
     st.markdown('</div>', unsafe_allow_html=True)
     
+    # Blurred background simulation
     st.markdown('<div class="blur-content">', unsafe_allow_html=True)
     st.title("Loading Secure Data...")
     st.write("█" * 100)
