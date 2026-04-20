@@ -73,6 +73,31 @@ st.markdown('''
 
 # ... (Keep the rest of your script until the Drill-Down section) ...
 
+# 1.1. Authentication Logic
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+if not st.session_state["authenticated"]:
+    # Login card (Sharp)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    st.write("### 🔒 Toyota Enterprise Access")
+    pwd = st.text_input("Enter Password", type="password", key="login_field")
+    if st.button("Unlock Dashboard", use_container_width=True):
+        if pwd == "Toyota2026": # Create your password here
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect Password")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Blurred background simulation
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    st.title("Loading Secure Data...")
+    st.write("█" * 100)
+    st.write("█" * 80)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
+
 # 2. Robust Data Loader
 @st.cache_data
 def load_data():
