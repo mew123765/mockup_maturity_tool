@@ -147,40 +147,6 @@ def load_data():
 
 df = load_data()
 
-# --- DATA EXPORT LOGIC (Green Status Only) ---
-def get_green_report(df):
-    # Filter for Green status only
-    green_df = df[df['Status'].str.strip().lower() == 'green']
-    # Convert to CSV for download
-    return green_df.to_csv(index=False).encode('utf-8')
-
-if not df.empty:
-    st.title("🏭 Technology Maturity Dashboard")
-
-    # Create a layout for the top header and download button
-    head_col1, head_col2 = st.columns([3, 1])
-    
-    with head_col1:
-        st.write("Welcome to the TMA Digital Transformation Roadmap.")
-        
-    with head_col2:
-        # Generate the filtered data
-        green_csv = get_green_report(df)
-        
-        # The Download Button
-        st.download_button(
-            label="📥 Download Green Solutions (Excel/CSV)",
-            data=green_csv,
-            file_name='TMA_Green_Solutions_Report.csv',
-            mime='text/csv',
-            use_container_width=True,
-            help="Click to download a list of all solutions currently marked as 'Have Solution' (Green)."
-        )
-
-    # --- 1. THEME SELECTION ---
-    # (Rest of your code continues here...)
-
-
 if not df.empty:
     st.title("🏭 Technology Maturity Dashboard")
     
