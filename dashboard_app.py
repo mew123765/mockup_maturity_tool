@@ -9,7 +9,7 @@ st.set_page_config(layout="wide", page_title="TMA Maturity Dashboard")
 # --- UPDATED CUSTOM CSS ---
 st.markdown('''
 <style>
-/* Login Card Styling (High Priority Layer) */
+/* Login Card Styling */
 .login-card {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
     z-index: 10000; background: white; padding: 40px; border-radius: 15px;
@@ -17,38 +17,24 @@ st.markdown('''
     text-align: center; width: 400px;
 }
 
-/* Background Blur - Active only when not authenticated */
+/* Background Blur */
 .blur-content {
     filter: blur(15px); pointer-events: none; user-select: none;
 }
 
-/* Container for the 4/5 and 1/5 split */
-.detail-container {
-    display: flex;
-    gap: 20px;
-    align-items: stretch;
-}
-
-.text-stack {
-    flex: 4; 
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-}
-
-/* Specific Box Styling */
+/* Detail Box Styling */
 .detail-card {
     background-color: #ffffff; 
     padding: 12px; 
     border-radius: 8px;
     border: 1px solid #dee2e6;
     color: #111111 !important;
+    margin-bottom: 10px;
 }
 
 .card-title { color: #6c757d; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
 .card-content { color: #000000 !important; font-size: 0.95rem; }
 
-/* Scrollable Box for Function */
 .scroll-box {
     max-height: 150px;
     overflow-y: auto;
@@ -86,14 +72,10 @@ st.markdown('''
     font-size: 0.9rem;
     border: 1px solid #005a9e;
 }
-.folder-btn:hover {
-    background-color: #005a9e;
-    text-decoration: none;
-}
 </style>
 ''', unsafe_allow_html=True)
 
-# 1.1. Authentication Logic (Secure Version)
+# 1.1. Authentication Logic
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
@@ -103,7 +85,6 @@ if not st.session_state["authenticated"]:
     pwd = st.text_input("Enter Password", type="password", key="login_field")
     
     if st.button("Unlock Dashboard", use_container_width=True):
-        # This line now pulls from the Streamlit Cloud Settings
         if pwd == st.secrets["password"]: 
             st.session_state["authenticated"] = True
             st.rerun()
@@ -111,7 +92,6 @@ if not st.session_state["authenticated"]:
             st.error("Incorrect Password")
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Blurred background simulation
     st.markdown('<div class="blur-content">', unsafe_allow_html=True)
     st.title("Loading Secure Data...")
     st.write("█" * 100)
@@ -135,7 +115,6 @@ def load_data():
     if 'use case' in cols_map: df = df.rename(columns={cols_map['use case']: 'Use Case'})
     if 'status' in cols_map: df = df.rename(columns={cols_map['status']: 'Status'})
         
-    # Standardize Status
     status_map = {'Green': 'Have solution', 'Yellow': 'Solution under develop', 'Red': "Doesn't have solution"}
     if 'Status' in df.columns:
         df['Status_Label'] = df['Status'].map(status_map).fillna("Unknown Status")
@@ -148,7 +127,23 @@ def load_data():
 df = load_data()
 
 if not df.empty:
-    st.title("🏭 Technology Maturity Dashboard")
+    # --- HEADER & DOWNLOAD BUTTON ---
+    col_h1, col_h2 = st.columns([3, 1])
+    with col_h1:
+        st.title("🏭 Technology Maturity Dashboard")
+    with col_h2:
+        # Filter logic: Select only Green status rows
+        green_df = df[df['Status'].str.strip().lower() == 'green']
+        csv_data = green_df.to_csv(index=False).encode('utf-8')
+        
+        st.write("") # Spacer
+        st.download_button(
+            label="📥 Download Green Solutions",
+            data=csv_data,
+            file_name='Toyota_Green_Solutions_Report.csv',
+            mime='text/csv',
+            use_container_width=True
+        )
     
     # 1. THEME SELECTION
     theme_list = sorted(df['Theme'].dropna().unique().tolist())
@@ -219,12 +214,9 @@ if not df.empty:
             if target_use_case:
                 detail = aff_spec[aff_spec['Use Case'] == target_use_case].iloc[0]
     
-                # Check Yokoten Status
                 is_yokoten = str(detail.get('Capability to implement to others', 'No')).strip().lower() == 'yes'
                 y_cls = "yokoten-can" if is_yokoten else "yokoten-cant"
                 y_txt = "Can Yokoten" if is_yokoten else "Cannot Yokoten"
-                
-                # Get OneDrive URL
                 folder_url = detail.get("Folder_URL", "#")
 
                 left_info, right_status = st.columns([4, 1])
@@ -249,10 +241,9 @@ if not df.empty:
                         </div>''', unsafe_allow_html=True)
 
                 with right_status:
-                    # Combined Status Box and OneDrive Link
                     st.markdown(f'''
                         <div class="yokoten-box {y_cls}">{y_txt}</div>
                         <a href="{folder_url}" target="_blank" class="folder-btn">
-                            📁 View OneDrive Folder For More Detail
+                            📁 View OneDrive Folder
                         </a>
                         ''', unsafe_allow_html=True)
