@@ -121,7 +121,7 @@ if not df.empty:
             
             st.write("") # Spacer
             st.download_button(
-                label="📥 Download all Available Cases",
+                label="📥 Download all Available Cases List",
                 data=csv_data,
                 file_name='Toyota_Green_Solutions_Report.csv',
                 mime='text/csv',
