@@ -127,23 +127,36 @@ def load_data():
 df = load_data()
 
 if not df.empty:
-    # --- HEADER & DOWNLOAD BUTTON ---
+    # --- HEADER & DOWNLOAD BUTTON (REPAIRED) ---
     col_h1, col_h2 = st.columns([3, 1])
     with col_h1:
         st.title("🏭 Technology Maturity Dashboard")
     with col_h2:
-        # Filter logic: Select only Green status rows
-        green_df = df[df['Status'].str.strip().lower() == 'green']
-        csv_data = green_df.to_csv(index=False).encode('utf-8')
+        # 1. Create a safe copy of the data
+        export_df = df.copy()
         
-        st.write("") # Spacer
-        st.download_button(
-            label="📥 Download Green Solutions",
-            data=csv_data,
-            file_name='Toyota_Green_Solutions_Report.csv',
-            mime='text/csv',
-            use_container_width=True
-        )
+        # 2. Check if 'Status' column exists (it should be renamed by the loader)
+        # We look for 'Status' or the original 'status' 
+        status_col = 'Status' if 'Status' in export_df.columns else None
+        
+        if status_col:
+            # 3. Filter only rows where the original Status is 'Green'
+            # Using .get() and checking values avoids the AttributeError
+            green_mask = export_df[status_col].astype(str).str.strip().str.lower() == 'green'
+            green_df = export_df[green_mask]
+            
+            csv_data = green_df.to_csv(index=False).encode('utf-8')
+            
+            st.write("") # Spacer
+            st.download_button(
+                label="📥 Download Green Solutions",
+                data=csv_data,
+                file_name='Toyota_Green_Solutions_Report.csv',
+                mime='text/csv',
+                use_container_width=True
+            )
+        else:
+            st.warning("Download unavailable: 'Status' column not found.")
     
     # 1. THEME SELECTION
     theme_list = sorted(df['Theme'].dropna().unique().tolist())
